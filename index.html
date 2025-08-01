@@ -12,6 +12,27 @@
     <meta name="theme-color" content="#008751">
 </head>
 <body>
+    <!-- Push Notification Banner -->
+    <div class="notification-banner" id="notificationBanner" style="display: none;">
+        <div class="notification-banner-content">
+            <div class="notification-info">
+                <i class="fas fa-bell"></i>
+                <div>
+                    <h4>Stay Updated!</h4>
+                    <p>Get notified about deals, flash sales, and order updates</p>
+                </div>
+            </div>
+            <div class="notification-actions">
+                <button class="allow-notifications-btn" onclick="requestNotificationPermission()">
+                    <i class="fas fa-bell"></i> Allow Notifications
+                </button>
+                <button class="dismiss-notification-btn" onclick="dismissNotificationBanner()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Location Selection Modal -->
     <div class="location-modal" id="locationModal">
         <div class="location-modal-content">
@@ -19,78 +40,12 @@
                 <h3><i class="fas fa-map-marker-alt"></i> Choose Your Location</h3>
                 <p>Select your location to see available dishes and delivery options</p>
             </div>
-            <div class="location-options">
-                <div class="location-option" data-location="ikeja" data-phone="2348123456001" data-address="123 Ikeja Way, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Ikeja Kitchen</h4>
-                        <p>123 Ikeja Way, Lagos State</p>
-                        <span class="status active"><i class="fas fa-circle"></i> Available</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> 30-45 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦500 delivery</span>
-                    </div>
-                </div>
-                
-                <div class="location-option" data-location="victoria-island" data-phone="2348123456002" data-address="456 Victoria Island, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Victoria Island Kitchen</h4>
-                        <p>456 Victoria Island, Lagos State</p>
-                        <span class="status active"><i class="fas fa-circle"></i> Available</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> 25-40 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦700 delivery</span>
-                    </div>
-                </div>
-                
-                <div class="location-option" data-location="surulere" data-phone="2348123456003" data-address="789 Surulere Road, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Surulere Kitchen</h4>
-                        <p>789 Surulere Road, Lagos State</p>
-                        <span class="status active"><i class="fas fa-circle"></i> Available</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> 35-50 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦600 delivery</span>
-                    </div>
-                </div>
-                
-                <div class="location-option" data-location="lekki" data-phone="2348123456004" data-address="321 Lekki Phase 1, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Lekki Kitchen</h4>
-                        <p>321 Lekki Phase 1, Lagos State</p>
-                        <span class="status inactive"><i class="fas fa-circle"></i> Temporarily Closed</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> Usually 40-55 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦800 delivery</span>
-                    </div>
-                </div>
-                
-                <div class="location-option" data-location="ajah" data-phone="2348123456005" data-address="654 Ajah Express, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Ajah Kitchen</h4>
-                        <p>654 Ajah Express, Lagos State</p>
-                        <span class="status active"><i class="fas fa-circle"></i> Available</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> 45-60 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦900 delivery</span>
-                    </div>
-                </div>
-                
-                <div class="location-option" data-location="yaba" data-phone="2348123456006" data-address="987 Yaba College Road, Lagos State">
-                    <div class="location-info">
-                        <h4><i class="fas fa-store"></i> Yaba Kitchen</h4>
-                        <p>987 Yaba College Road, Lagos State</p>
-                        <span class="status active"><i class="fas fa-circle"></i> Available</span>
-                    </div>
-                    <div class="location-features">
-                        <span><i class="fas fa-clock"></i> 30-45 mins</span>
-                        <span><i class="fas fa-motorcycle"></i> ₦500 delivery</span>
-                    </div>
-                </div>
+            <div class="location-loading" id="locationLoading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading locations...</p>
+            </div>
+            <div class="location-options" id="locationOptions">
+                <!-- Locations will be loaded dynamically -->
             </div>
             <div class="location-modal-footer">
                 <p><i class="fas fa-info-circle"></i> You can change your location anytime from the header</p>
@@ -123,7 +78,7 @@
                     </div>
                     
                     <div class="refresh-controls">
-                        <button class="refresh-btn" onclick="refreshProductData()" title="Refresh menu">
+                        <button class="refresh-btn" onclick="refreshData()" title="Refresh menu">
                             <i class="fas fa-sync-alt"></i>
                             <span class="refresh-text">Refresh</span>
                         </button>
@@ -155,7 +110,7 @@
                     </div>
                     <div class="feature">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>6 Locations</span>
+                        <span id="activeLocationsCount">Loading...</span>
                     </div>
                     <div class="feature">
                         <i class="fas fa-heart"></i>
@@ -172,6 +127,55 @@
         </div>
     </section>
 
+    <!-- Deals Section -->
+    <section class="deals-section" id="dealsSection" style="display: none;">
+        <div class="container">
+            <div class="deals-header">
+                <h2><i class="fas fa-fire"></i> Today's Deals</h2>
+                <div class="deals-timer" id="dealsTimer">
+                    <i class="fas fa-clock"></i>
+                    <span>Refreshing deals...</span>
+                </div>
+            </div>
+            
+            <!-- Daily Deals -->
+            <div class="daily-deals" id="dailyDeals" style="display: none;">
+                <div class="deals-category-header">
+                    <h3><i class="fas fa-calendar-day"></i> Daily Special</h3>
+                    <span class="deal-badge">Today Only</span>
+                </div>
+                <div class="deals-grid" id="dailyDealsGrid">
+                    <!-- Daily deals loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Flash Sales -->
+            <div class="flash-sales" id="flashSales" style="display: none;">
+                <div class="deals-category-header">
+                    <h3><i class="fas fa-bolt"></i> Flash Sale</h3>
+                    <div class="flash-timer" id="flashTimer">
+                        <i class="fas fa-stopwatch"></i>
+                        <span id="flashTimeLeft">Loading...</span>
+                    </div>
+                </div>
+                <div class="deals-grid" id="flashSalesGrid">
+                    <!-- Flash sales loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Combo Deals -->
+            <div class="combo-deals" id="comboDeals" style="display: none;">
+                <div class="deals-category-header">
+                    <h3><i class="fas fa-layer-group"></i> Combo Deals</h3>
+                    <span class="deal-badge">Best Value</span>
+                </div>
+                <div class="deals-grid" id="comboDealsGrid">
+                    <!-- Combo deals loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Store Status Banner -->
     <section class="store-status" id="storeStatus" style="display: none;">
         <div class="container">
@@ -181,7 +185,7 @@
                     <span id="statusMessage">Kitchen information will appear here</span>
                 </div>
                 <div class="status-actions">
-                    <span class="store-hours" id="storeHours">Mon-Sun: 9:00 AM - 11:00 PM</span>
+                    <span class="store-hours" id="storeHours">Loading hours...</span>
                     <a href="#" class="store-phone" id="storePhone">
                         <i class="fas fa-phone"></i>
                         Call Kitchen
@@ -203,14 +207,7 @@
                 <div class="filter-group">
                     <select id="categoryFilter">
                         <option value="">All Categories</option>
-                        <option value="rice-pasta">Rice & Pasta</option>
-                        <option value="swallow">Swallow</option>
-                        <option value="soups">Soups</option>
-                        <option value="side-dishes">Side Dishes</option>
-                        <option value="pastries">Pastries</option>
-                        <option value="cakes">Cakes</option>
-                        <option value="proteins">Proteins</option>
-                        <option value="others">Others</option>
+                        <!-- Categories loaded dynamically -->
                     </select>
                 </div>
                 
@@ -415,10 +412,8 @@
         </div>
     </div>
 
-    <!-- Cart Overlay -->
+    <!-- Overlays -->
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
-
-    <!-- Location Modal Overlay -->
     <div class="location-overlay" id="locationOverlay"></div>
 
     <!-- Notification Container -->
@@ -439,7 +434,7 @@
             <i class="fas fa-shopping-cart"></i>
             <span class="quick-cart-count" id="quickCartCount">0</span>
         </button>
-        <button class="quick-action-btn" onclick="refreshProductData()" title="Refresh menu">
+        <button class="quick-action-btn" onclick="refreshData()" title="Refresh menu">
             <i class="fas fa-sync-alt"></i>
         </button>
     </div>
@@ -469,25 +464,15 @@
                 
                 <div class="footer-section">
                     <h4>Popular Dishes</h4>
-                    <ul>
-                        <li><a href="#jollof">Jollof Rice</a></li>
-                        <li><a href="#egusi">Egusi Soup</a></li>
-                        <li><a href="#pounded-yam">Pounded Yam</a></li>
-                        <li><a href="#pepper-soup">Pepper Soup</a></li>
-                        <li><a href="#meatpie">Meat Pie</a></li>
-                        <li><a href="#puff-puff">Puff Puff</a></li>
+                    <ul id="popularDishes">
+                        <li>Loading...</li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
                     <h4>Our Kitchens</h4>
-                    <ul class="locations-list">
-                        <li><i class="fas fa-map-marker-alt"></i> Ikeja Kitchen</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Victoria Island Kitchen</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Surulere Kitchen</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Lekki Kitchen</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Ajah Kitchen</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Yaba Kitchen</li>
+                    <ul class="locations-list" id="footerLocations">
+                        <li>Loading locations...</li>
                     </ul>
                 </div>
                 
@@ -552,267 +537,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Enhanced JavaScript for Location Modal -->
-    <script>
-        // Location Modal Functions
-        function showLocationModal() {
-            document.getElementById('locationModal').classList.add('active');
-            document.getElementById('locationOverlay').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function hideLocationModal() {
-            document.getElementById('locationModal').classList.remove('active');
-            document.getElementById('locationOverlay').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        // Location selection handling
-        document.addEventListener('DOMContentLoaded', function() {
-            const locationOptions = document.querySelectorAll('.location-option');
-            const locationOverlay = document.getElementById('locationOverlay');
-            
-            // Show location modal on first visit
-            const savedLocation = localStorage.getItem('selectedLocation');
-            if (!savedLocation) {
-                setTimeout(() => showLocationModal(), 1000);
-            } else {
-                updateSelectedLocation(savedLocation);
-            }
-
-            // Handle location selection
-            locationOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    const isActive = !this.classList.contains('inactive');
-                    if (isActive) {
-                        const location = this.dataset.location;
-                        const phone = this.dataset.phone;
-                        const address = this.dataset.address;
-                        const name = this.querySelector('h4').textContent;
-                        
-                        selectLocation(location, name, phone, address);
-                        hideLocationModal();
-                    } else {
-                        showNotification('This kitchen is temporarily closed', 'warning');
-                    }
-                });
-            });
-
-            // Close modal when clicking overlay
-            locationOverlay.addEventListener('click', function() {
-                if (savedLocation) {
-                    hideLocationModal();
-                }
-            });
-        });
-
-        function selectLocation(location, name, phone, address) {
-            localStorage.setItem('selectedLocation', location);
-            localStorage.setItem('selectedLocationName', name);
-            localStorage.setItem('selectedLocationPhone', phone);
-            localStorage.setItem('selectedLocationAddress', address);
-            
-            updateSelectedLocation(location);
-            loadLocationProducts(location);
-            showNotification(`Switched to ${name}`, 'success');
-        }
-
-        function updateSelectedLocation(location) {
-            const selectedLocationSpan = document.getElementById('selectedLocation');
-            const savedName = localStorage.getItem('selectedLocationName');
-            if (savedName) {
-                selectedLocationSpan.textContent = savedName.replace(' Kitchen', '');
-            }
-        }
-
-        function loadLocationProducts(location) {
-            // This will be implemented in script.js
-            console.log('Loading products for location:', location);
-        }
-
-        // Copy existing functions with updated references
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installBanner').style.display = 'block';
-        });
-
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((result) => {
-                    if (result.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                    document.getElementById('installBanner').style.display = 'none';
-                });
-            }
-        }
-
-        function dismissInstallBanner() {
-            document.getElementById('installBanner').style.display = 'none';
-            localStorage.setItem('installBannerDismissed', 'true');
-        }
-
-        if (localStorage.getItem('installBannerDismissed') === 'true') {
-            document.getElementById('installBanner').style.display = 'none';
-        }
-
-        window.addEventListener('online', function() {
-            document.getElementById('offlineIndicator').style.display = 'none';
-            showNotification('Connection restored', 'success');
-        });
-
-        window.addEventListener('offline', function() {
-            document.getElementById('offlineIndicator').style.display = 'block';
-            showNotification('You are now offline', 'warning');
-        });
-
-        function retryConnection() {
-            if (navigator.onLine) {
-                document.getElementById('offlineIndicator').style.display = 'none';
-                showNotification('Connection restored', 'success');
-                refreshProductData();
-            } else {
-                showNotification('Still offline. Please check your connection.', 'error');
-            }
-        }
-
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            const themeIcon = document.querySelector('.theme-toggle-footer i');
-            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            
-            showNotification(`Switched to ${newTheme} theme`, 'info');
-        }
-
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        if (savedTheme === 'dark') {
-            document.querySelector('.theme-toggle-footer i').className = 'fas fa-sun';
-        }
-
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-
-        function scrollToProducts() {
-            document.getElementById('productsSection').scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-
-        window.addEventListener('scroll', function() {
-            const quickActions = document.getElementById('quickActionsCustomer');
-            if (window.scrollY > 300) {
-                quickActions.style.display = 'flex';
-            } else {
-                quickActions.style.display = 'none';
-            }
-        });
-
-        function clearAllFilters() {
-            document.getElementById('searchFilter').value = '';
-            document.getElementById('categoryFilter').value = '';
-            document.getElementById('availabilityFilter').value = '';
-            document.getElementById('sortFilter').value = 'name';
-            
-            applyFilters();
-            showNotification('All filters cleared', 'info');
-        }
-
-        function loadMoreProducts() {
-            const loadMoreBtn = document.querySelector('.load-more-btn');
-            const originalText = loadMoreBtn.innerHTML;
-            
-            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-            loadMoreBtn.disabled = true;
-            
-            setTimeout(() => {
-                loadMoreBtn.innerHTML = originalText;
-                loadMoreBtn.disabled = false;
-                showNotification('More dishes loaded', 'success');
-            }, 1000);
-        }
-
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.error);
-            showNotification('An error occurred. Please refresh the page.', 'error');
-        });
-
-        window.addEventListener('load', function() {
-            const loadTime = performance.now();
-            console.log(`Page loaded in ${Math.round(loadTime)}ms`);
-            
-            if (loadTime > 3000) {
-                showNotification('Page loaded slowly. Consider refreshing for better performance.', 'warning');
-            }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('searchFilter').focus();
-            }
-            
-            if (e.key === 'Escape') {
-                const cartSidebar = document.getElementById('cartSidebar');
-                if (cartSidebar.classList.contains('open')) {
-                    toggleCart();
-                }
-                
-                const checkoutModal = document.getElementById('checkoutModal');
-                if (checkoutModal.classList.contains('active')) {
-                    closeCheckoutForm();
-                }
-
-                const locationModal = document.getElementById('locationModal');
-                if (locationModal.classList.contains('active')) {
-                    const savedLocation = localStorage.getItem('selectedLocation');
-                    if (savedLocation) {
-                        hideLocationModal();
-                    }
-                }
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                refreshProductData();
-            }
-        });
-
-        function trackEvent(eventName, eventData) {
-            console.log('Analytics Event:', eventName, eventData);
-        }
-
-        trackEvent('page_view', {
-            page: 'home',
-            timestamp: new Date().toISOString()
-        });
-    </script>
 
     <script src="script.js"></script>
 </body>
