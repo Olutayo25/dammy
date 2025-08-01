@@ -411,7 +411,136 @@
             </form>
         </div>
     </div>
-
+    <!-- Add this AFTER the existing checkout modal (before cart overlay) -->
+    
+    <!-- Product Customization Modal -->
+    <div class="product-modal" id="productModal">
+        <div class="product-modal-content">
+            <div class="product-modal-header">
+                <h3 id="productModalTitle">Customize Your Order</h3>
+                <button class="close-product-modal" onclick="closeProductModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="product-modal-body">
+                <div class="product-image-section">
+                    <div class="product-main-image">
+                        <img id="productModalImage" src="" alt="">
+                    </div>
+                    <div class="product-price-display">
+                        <span class="current-price" id="modalCurrentPrice">₦0</span>
+                        <span class="base-price" id="modalBasePrice">₦0</span>
+                    </div>
+                </div>
+                
+                <div class="product-options-section">
+                    <!-- Size Options -->
+                    <div class="option-group" id="sizeOptions" style="display: none;">
+                        <h4><i class="fas fa-expand-arrows-alt"></i> Choose Size</h4>
+                        <div class="option-buttons" id="sizeButtons"></div>
+                    </div>
+                    
+                    <!-- Flavor Options -->
+                    <div class="option-group" id="flavorOptions" style="display: none;">
+                        <h4><i class="fas fa-birthday-cake"></i> Choose Flavor</h4>
+                        <div class="option-buttons" id="flavorButtons"></div>
+                    </div>
+                    
+                    <!-- Shape Options -->
+                    <div class="option-group" id="shapeOptions" style="display: none;">
+                        <h4><i class="fas fa-shapes"></i> Choose Shape</h4>
+                        <div class="option-buttons" id="shapeButtons"></div>
+                    </div>
+                    
+                    <!-- Frosting Options -->
+                    <div class="option-group" id="frostingOptions" style="display: none;">
+                        <h4><i class="fas fa-cookie-bite"></i> Choose Frosting</h4>
+                        <div class="option-buttons" id="frostingButtons"></div>
+                    </div>
+                    
+                    <!-- Spice Level -->
+                    <div class="option-group" id="spiceOptions" style="display: none;">
+                        <h4><i class="fas fa-pepper-hot"></i> Spice Level</h4>
+                        <div class="option-buttons" id="spiceButtons"></div>
+                    </div>
+                    
+                    <!-- Custom Text Input -->
+                    <div class="option-group" id="customTextOption" style="display: none;">
+                        <h4><i class="fas fa-font"></i> Custom Message</h4>
+                        <div class="custom-text-input">
+                            <input type="text" id="customText" placeholder="Enter your custom message..." maxlength="50">
+                            <small class="char-counter">0/50 characters</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Add-ons -->
+                    <div class="option-group" id="addonsOptions" style="display: none;">
+                        <h4><i class="fas fa-plus-circle"></i> Add-ons</h4>
+                        <div class="addons-list" id="addonsList"></div>
+                    </div>
+                    
+                    <!-- Special Instructions -->
+                    <div class="option-group">
+                        <h4><i class="fas fa-sticky-note"></i> Special Instructions</h4>
+                        <textarea id="specialInstructions" placeholder="Any special requests or dietary requirements..." rows="3"></textarea>
+                    </div>
+                    
+                    <!-- Quantity Selection -->
+                    <div class="quantity-section">
+                        <h4><i class="fas fa-sort-numeric-up"></i> Quantity</h4>
+                        <div class="quantity-controls large">
+                            <button class="quantity-btn" onclick="updateModalQuantity(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="modalQuantity" value="1" min="1" max="10">
+                            <button class="quantity-btn" onclick="updateModalQuantity(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-modal-footer">
+                <div class="modal-price-summary">
+                    <div class="price-breakdown" id="priceBreakdown"></div>
+                    <div class="total-price">
+                        Total: <span id="modalTotalPrice">₦0</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeProductModal()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn-primary" onclick="addCustomizedToCart()">
+                        <i class="fas fa-cart-plus"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Modal Overlay -->
+    <div class="product-modal-overlay" id="productModalOverlay" onclick="closeProductModal()"></div>
+    
+    <!-- Add this to your existing notification banner section -->
+    <!-- Enhancement Banner (for new features) -->
+    <div class="enhancement-banner" id="enhancementBanner" style="display: none;">
+        <div class="enhancement-content">
+            <div class="enhancement-info">
+                <i class="fas fa-magic"></i>
+                <div>
+                    <h4>New! Customize Your Orders</h4>
+                    <p>Choose sizes, flavors, and add special touches to make it perfect</p>
+                </div>
+            </div>
+            <button class="dismiss-enhancement" onclick="dismissEnhancementBanner()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
     <!-- Overlays -->
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
     <div class="location-overlay" id="locationOverlay"></div>
