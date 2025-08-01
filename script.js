@@ -2239,7 +2239,6 @@ window.updateCartItemQuantity = updateCartItemQuantity;
 window.setCartItemQuantity = setCartItemQuantity;
 window.dismissEnhancementBanner = dismissEnhancementBanner;
 window.addToCart = addToCart;
-window.addDealToCart = addDealToCart;
 window.updateQuantity = updateQuantity;
 window.setQuantity = setQuantity;
 window.removeFromCart = removeFromCart;
