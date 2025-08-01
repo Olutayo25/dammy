@@ -1023,46 +1023,261 @@ async function initializeApp() {
 }
 
 // =============================================================================
-// GLOBAL EXPORTS (Enhanced)
+// MISSING CORE FUNCTIONS - ADD THESE
 // =============================================================================
 
-// Export new functions for global access
-window.openProductCustomization = openProductCustomization;
-window.closeProductModal = closeProductModal;
-window.selectVariant = selectVariant;
-window.toggleAddon = toggleAddon;
-window.updateModalQuantity = updateModalQuantity;
-window.addCustomizedToCart = addCustomizedToCart;
-window.editCartItem = editCartItem;
-window.updateCartItemQuantity = updateCartItemQuantity;
-window.setCartItemQuantity = setCartItemQuantity;
-window.dismissEnhancementBanner = dismissEnhancementBanner;
+// Simple addToCart for non-variant products
+function addToCart(productId) {
+    if (!selectedLocation) {
+        showNotification('Please select a location first', 'error');
+        return;
+    }
+    
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    // Check if product has variants - if so, open customization instead
+    if (product.hasVariants || product.isCustomizable) {
+        if (product.isCustomizable && product.category === 'cakes') {
+            openCakeBuilder(productId);
+        } else {
+            openProductCustomization(productId);
+        }
+        return;
+    }
+    
+    const availableStock = product.stock ? (product.stock[selectedLocation] || 0) : 0;
+    if (availableStock <= 0) {
+        showNotification('Dish is currently unavailable', 'error');
+        return;
+    }
+    
+    const existingItem = cart.find(item => item.productId === productId && !item.isCustomized);
+    if (existingItem) {
+        if (existingItem.quantity < availableStock) {
+            existingItem.quantity += 1;
+            showNotification(`Added another ${product.name} to your order`, 'success');
+        } else {
+            showNotification('Cannot add more than available stock', 'warning');
+            return;
+        }
+    } else {
+        cart.push({
+            id: generateCartItemId(),
+            productId: productId,
+            name: product.name,
+            price: product.basePrice || product.price,
+            unit: product.unit,
+            quantity: 1,
+            location: selectedLocation,
+            category: product.category,
+            isDeal: false,
+            isCustomized: false
+        });
+        showNotification(`${product.name} added to your order`, 'success');
+    }
+    
+    updateCartDisplay();
+    updateQuickCartCount();
+    displayProducts();
+    saveCartToStorage();
+    
+    trackEvent('add_to_cart', {
+        productId: productId,
+        productName: product.name,
+        price: product.basePrice || product.price,
+        quantity: 1,
+        location: selectedLocation,
+        category: product.category,
+        timestamp: new Date().toISOString()
+    });
+}
 
-// Keep all existing exports
-window.addToCart = addToCart;
-window.addDealToCart = addDealToCart;
-window.updateQuantity = updateQuantity;
-window.setQuantity = setQuantity;
-window.removeFromCart = removeFromCart;
-window.toggleCart = toggleCart;
-window.showCheckoutForm = showCheckoutForm;
-window.closeCheckoutForm = closeCheckoutForm;
-window.refreshData = refreshData;
-window.clearAllFilters = clearAllFilters;
-window.scrollToTop = scrollToTop;
-window.scrollToProducts = scrollToProducts;
-window.toggleTheme = toggleTheme;
-window.installApp = installApp;
-window.dismissInstallBanner = dismissInstallBanner;
-window.retryConnection = retryConnection;
-window.loadMoreProducts = loadMoreProducts;
-window.showLocationModal = showLocationModal;
-window.hideLocationModal = hideLocationModal;
-window.handleLocationSelection = handleLocationSelection;
-window.requestNotificationPermission = requestNotificationPermission;
-window.dismissNotificationBanner = dismissNotificationBanner;
+// Update quantity for simple products
+function updateQuantity(productId, change) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const availableStock = product.stock ? (product.stock[selectedLocation] || 0) : 0;
+    const existingItem = cart.find(item => item.productId === productId && !item.isCustomized);
+    
+    if (existingItem) {
+        const newQuantity = existingItem.quantity + change;
+        if (newQuantity <= 0) {
+            removeFromCart(existingItem.id);
+        } else if (newQuantity <= availableStock) {
+            existingItem.quantity = newQuantity;
+            updateCartDisplay();
+            updateQuickCartCount();
+            displayProducts();
+            saveCartToStorage();
+        } else {
+            showNotification('Cannot exceed available stock', 'warning');
+        }
+    } else if (change > 0) {
+        addToCart(productId);
+    }
+}
 
-console.log('🚀 Enhanced Naija Bites Customer App with Product Variants Loaded Successfully!');
+// Set quantity for simple products
+function setQuantity(productId, quantity) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const availableStock = product.stock ? (product.stock[selectedLocation] || 0) : 0;
+    const newQuantity = parseInt(quantity) || 0;
+    
+    if (newQuantity <= 0) {
+        const existingItem = cart.find(item => item.productId === productId && !item.isCustomized);
+        if (existingItem) {
+            removeFromCart(existingItem.id);
+        }
+    } else if (newQuantity <= availableStock) {
+        const existingItem = cart.find(item => item.productId === productId && !item.isCustomized);
+        if (existingItem) {
+            existingItem.quantity = newQuantity;
+        } else {
+            cart.push({
+                id: generateCartItemId(),
+                productId: productId,
+                name: product.name,
+                price: product.basePrice || product.price,
+                unit: product.unit,
+                quantity: newQuantity,
+                location: selectedLocation,
+                category: product.category,
+                isDeal: false,
+                isCustomized: false
+            });
+        }
+        updateCartDisplay();
+        updateQuickCartCount();
+        displayProducts();
+        saveCartToStorage();
+    } else {
+        showNotification('Cannot exceed available stock', 'warning');
+        displayProducts();
+    }
+}
+
+// Show location modal function
+function showLocationModal() {
+    const locationModal = document.getElementById('locationModal');
+    const locationOverlay = document.getElementById('locationOverlay');
+    
+    if (locationModal && locationOverlay) {
+        locationModal.classList.add('active');
+        locationOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Hide location modal function  
+function hideLocationModal() {
+    const locationModal = document.getElementById('locationModal');
+    const locationOverlay = document.getElementById('locationOverlay');
+    
+    if (locationModal && locationOverlay) {
+        locationModal.classList.remove('active');
+        locationOverlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Enhanced createProductCard to handle all product types correctly
+function createProductCard(product, index) {
+    const stock = product.stock ? (product.stock[selectedLocation] || 0) : 0;
+    const stockStatus = getStockStatus(stock);
+    
+    // For customized items, check cart differently
+    let cartQuantity = 0;
+    if (product.hasVariants || product.isCustomizable) {
+        // Don't show quantity for variant products - they use customization
+        cartQuantity = 0;
+    } else {
+        const isInCart = cart.find(item => item.productId === product.id && !item.isCustomized);
+        cartQuantity = isInCart ? isInCart.quantity : 0;
+    }
+    
+    const hasVariants = product.hasVariants && product.variants;
+    const isCustomizable = product.isCustomizable;
+    
+    // Calculate price range for variant products
+    const priceDisplay = hasVariants ? getPriceDisplay(product) : `₦${(product.basePrice || product.price).toLocaleString()}`;
+    
+    return `
+        <div class="product-card fade-in" data-product-id="${product.id}" style="animation-delay: ${index * 0.1}s">
+            <div class="product-image">
+                ${product.image ? 
+                    `<img src="${product.image}" alt="${product.name}" loading="lazy" 
+                          onerror="this.src='/images/placeholder-food.jpg'">` :
+                    `<div class="product-placeholder">
+                        <i class="fas ${getProductIcon(product.category)}"></i>
+                        <span>${product.name}</span>
+                     </div>`
+                }
+                <div class="stock-badge ${stockStatus.class}">${stockStatus.text}</div>
+                ${product.isSpicy ? '<div class="spicy-badge"><i class="fas fa-pepper-hot"></i></div>' : ''}
+                ${hasVariants ? '<div class="variant-badge"><i class="fas fa-cog"></i> Customizable</div>' : ''}
+                ${isCustomizable ? '<div class="custom-badge"><i class="fas fa-magic"></i> Custom</div>' : ''}
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">${product.name}</h3>
+                <p class="product-category">${getCategoryName(product.category)}</p>
+                <p class="product-description">${product.description}</p>
+                <div class="product-details">
+                    <span class="prep-time"><i class="fas fa-clock"></i> ${product.prepTime || '15-20 mins'}</span>
+                    ${product.isSpicy ? '<span class="spicy-indicator"><i class="fas fa-pepper-hot"></i> Spicy</span>' : ''}
+                </div>
+                
+                <div class="product-price">
+                    ${priceDisplay}/${product.unit}
+                    ${hasVariants ? '<small class="price-note">Starting from</small>' : ''}
+                </div>
+                
+                <div class="product-stock">
+                    <i class="fas fa-utensils"></i>
+                    Available: ${stock} ${product.unit}${stock !== 1 ? 's' : ''}
+                </div>
+                
+                ${hasVariants ? createVariantPreview(product) : ''}
+                
+                ${stock > 0 ? `
+                    ${hasVariants || isCustomizable ? `
+                        <button class="customize-product-btn" onclick="${isCustomizable && product.category === 'cakes' ? 'openCakeBuilder' : 'openProductCustomization'}(${product.id})">
+                            <i class="fas ${isCustomizable ? 'fa-magic' : 'fa-cog'}"></i>
+                            ${isCustomizable ? 'Design Your Cake' : 'Choose Options'}
+                        </button>
+                    ` : `
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity(${product.id}, -1)" 
+                                    ${cartQuantity <= 0 ? 'disabled' : ''}>
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="quantity-input" value="${cartQuantity}" 
+                                   min="0" max="${stock}" 
+                                   onchange="setQuantity(${product.id}, this.value)">
+                            <button class="quantity-btn" onclick="updateQuantity(${product.id}, 1)" 
+                                    ${cartQuantity >= stock ? 'disabled' : ''}>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <button class="add-to-cart-btn" onclick="addToCart(${product.id})" 
+                                ${stock <= 0 ? 'disabled' : ''}>
+                            <i class="fas fa-cart-plus"></i>
+                            Add to Order
+                        </button>
+                    `}
+                ` : `
+                    <button class="add-to-cart-btn" disabled>
+                        <i class="fas fa-times"></i>
+                        Currently Unavailable
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+}
 
 // =============================================================================
 // END OF ENHANCED SCRIPT - BATCH 1
@@ -2008,8 +2223,47 @@ function createProductCard(product, index) {
 }
 
 // =============================================================================
-// GLOBAL EXPORTS (Batch 2)
+// GLOBAL EXPORTS (COMPLETE LIST)
 // =============================================================================
+
+// Core product functions
+// Export new functions for global access
+window.openProductCustomization = openProductCustomization;
+window.closeProductModal = closeProductModal;
+window.selectVariant = selectVariant;
+window.toggleAddon = toggleAddon;
+window.updateModalQuantity = updateModalQuantity;
+window.addCustomizedToCart = addCustomizedToCart;
+window.editCartItem = editCartItem;
+window.updateCartItemQuantity = updateCartItemQuantity;
+window.setCartItemQuantity = setCartItemQuantity;
+window.dismissEnhancementBanner = dismissEnhancementBanner;
+window.addToCart = addToCart;
+window.addDealToCart = addDealToCart;
+window.updateQuantity = updateQuantity;
+window.setQuantity = setQuantity;
+window.removeFromCart = removeFromCart;
+window.toggleCart = toggleCart;
+window.showCheckoutForm = showCheckoutForm;
+window.closeCheckoutForm = closeCheckoutForm;
+window.refreshData = refreshData;
+window.clearAllFilters = clearAllFilters;
+window.scrollToTop = scrollToTop;
+window.scrollToProducts = scrollToProducts;
+window.toggleTheme = toggleTheme;
+window.installApp = installApp;
+window.dismissInstallBanner = dismissInstallBanner;
+window.retryConnection = retryConnection;
+window.loadMoreProducts = loadMoreProducts;
+
+// Location functions
+window.showLocationModal = showLocationModal;
+window.hideLocationModal = hideLocationModal;
+window.handleLocationSelection = handleLocationSelection;
+
+// Notification functions
+window.requestNotificationPermission = requestNotificationPermission;
+window.dismissNotificationBanner = dismissNotificationBanner;
 
 // Export cake builder functions
 window.openCakeBuilder = openCakeBuilder;
@@ -2034,4 +2288,14 @@ window.loadSavedDesign = loadSavedDesign;
 window.deleteSavedDesign = deleteSavedDesign;
 window.addCakeToCart = addCakeToCart;
 
-console.log('🎂 Naija Bites Batch 2: Interactive Cake Builder Loaded Successfully!');
+// =============================================================================
+// FINAL INITIALIZATION MESSAGE
+// =============================================================================
+
+console.log('🚀 Naija Bites Complete Platform Loaded Successfully!');
+console.log('✅ Features: Location Selection, Product Variants, Interactive Cake Builder, Mobile Responsive');
+console.log('🎂 Ready for Nigerian food delivery with full customization!');
+
+// =============================================================================
+// END OF SCRIPT
+// =============================================================================
