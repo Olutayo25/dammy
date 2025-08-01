@@ -1280,6 +1280,545 @@ function createProductCard(product, index) {
 }
 
 // =============================================================================
+// MISSING CORE FUNCTIONS PART 2- ADD THESE TO YOUR SCRIPT
+// =============================================================================
+
+    // Loading Overlay Functions
+    function showLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'flex';
+    }
+    
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+    
+    // Initial Data Loading
+    async function loadInitialData() {
+        try {
+            // Load locations if not already loaded
+            if (allLocations.length === 0) {
+                try {
+                    const response = await fetch(API_ENDPOINTS.locations);
+                    if (response.ok) {
+                        allLocations = await response.json();
+                    } else {
+                        allLocations = [
+                            { id: 'ikeja', name: 'Ikeja', address: '123 Allen Avenue, Ikeja', phone: '+234 801 234 5678' },
+                            { id: 'victoria-island', name: 'Victoria Island', address: '45 Adeola Odeku, VI', phone: '+234 802 345 6789' },
+                            { id: 'surulere', name: 'Surulere', address: '67 Bode Thomas, Surulere', phone: '+234 803 456 7890' },
+                            { id: 'ajah', name: 'Ajah', address: '89 Lekki-Epe Expressway, Ajah', phone: '+234 804 567 8901' },
+                            { id: 'yaba', name: 'Yaba', address: '12 Herbert Macaulay Way, Yaba', phone: '+234 805 678 9012' }
+                        ];
+                    }
+                } catch (error) {
+                    console.error('Error loading locations:', error);
+                    allLocations = [
+                        { id: 'ikeja', name: 'Ikeja', address: '123 Allen Avenue, Ikeja', phone: '+234 801 234 5678' },
+                        { id: 'victoria-island', name: 'Victoria Island', address: '45 Adeola Odeku, VI', phone: '+234 802 345 6789' },
+                        { id: 'surulere', name: 'Surulere', address: '67 Bode Thomas, Surulere', phone: '+234 803 456 7890' },
+                        { id: 'ajah', name: 'Ajah', address: '89 Lekki-Epe Expressway, Ajah', phone: '+234 804 567 8901' },
+                        { id: 'yaba', name: 'Yaba', address: '12 Herbert Macaulay Way, Yaba', phone: '+234 805 678 9012' }
+                    ];
+                }
+            }
+    
+            // Load products
+            products = [...fallbackProducts];
+            
+        } catch (error) {
+            console.error('Error in loadInitialData:', error);
+            products = [...fallbackProducts];
+        }
+    }
+    
+    // Storage Functions
+    function loadCartFromStorage() {
+        try {
+            const savedCart = localStorage.getItem('naijabites_cart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+            }
+        } catch (error) {
+            console.error('Error loading cart:', error);
+            cart = [];
+        }
+    }
+    
+    function saveCartToStorage() {
+        try {
+            localStorage.setItem('naijabites_cart', JSON.stringify(cart));
+        } catch (error) {
+            console.error('Error saving cart:', error);
+        }
+    }
+    
+    function loadUserPreferences() {
+        try {
+            const savedLocation = localStorage.getItem('naijabites_location');
+            const savedMode = localStorage.getItem('naijabites_delivery_mode');
+            
+            if (savedLocation) {
+                selectedLocation = savedLocation;
+            }
+            
+            if (savedMode) {
+                isDeliveryMode = savedMode === 'true';
+            }
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+        }
+    }
+    
+    // Event Listeners Setup
+    function initializeEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(handleSearch, 300));
+        }
+        
+        // Category filter
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', handleCategoryFilter);
+        }
+        
+        // Sort options
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', handleSortChange);
+        }
+        
+        // Delivery toggle
+        const deliveryToggle = document.getElementById('deliveryToggle');
+        if (deliveryToggle) {
+            deliveryToggle.addEventListener('change', handleDeliveryToggle);
+        }
+        
+        // Modal close buttons
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('active');
+                    const overlay = modal.nextElementSibling;
+                    if (overlay && overlay.classList.contains('modal-overlay')) {
+                        overlay.style.display = 'none';
+                    }
+                }
+            });
+        });
+    }
+    
+    // Location Handling
+    async function handleSavedLocation() {
+        if (selectedLocation) {
+            const locationData = allLocations.find(loc => loc.id === selectedLocation);
+            if (locationData) {
+                currentLocationData = locationData;
+                updateLocationDisplay();
+            } else {
+                showLocationModal();
+            }
+        } else {
+            showLocationModal();
+        }
+    }
+    
+    function handleLocationSelection(locationId) {
+        selectedLocation = locationId;
+        currentLocationData = allLocations.find(loc => loc.id === locationId);
+        
+        localStorage.setItem('naijabites_location', locationId);
+        
+        updateLocationDisplay();
+        displayProducts();
+        hideLocationModal();
+        
+        showNotification(`Location set to ${currentLocationData.name}`, 'success');
+        
+        trackEvent('location_selected', {
+            locationId: locationId,
+            locationName: currentLocationData.name
+        });
+    }
+    
+    function updateLocationDisplay() {
+        const locationDisplay = document.getElementById('selectedLocation');
+        const locationInfo = document.getElementById('locationInfo');
+        
+        if (locationDisplay && currentLocationData) {
+            locationDisplay.textContent = currentLocationData.name;
+        }
+        
+        if (locationInfo && currentLocationData) {
+            locationInfo.innerHTML = `
+                <h4>${currentLocationData.name}</h4>
+                <p>${currentLocationData.address}</p>
+                <p>${currentLocationData.phone}</p>
+            `;
+        }
+    }
+    
+    // Deals Loading
+    async function loadDeals() {
+        try {
+            // Simulate loading deals - replace with actual API calls
+            activeDeals = {
+                daily: [
+                    { id: 1, productId: 1, discount: 20, endTime: new Date(Date.now() + 86400000) }
+                ],
+                flash: [],
+                combo: []
+            };
+        } catch (error) {
+            console.error('Error loading deals:', error);
+        }
+    }
+    
+    // Refresh Intervals
+    function setupRefreshIntervals() {
+        // Refresh data every 5 minutes
+        syncInterval = setInterval(() => {
+            refreshData();
+        }, 300000);
+        
+        // Update deal timers every minute
+        setInterval(() => {
+            updateDealTimers();
+        }, 60000);
+    }
+    
+    // Quick Cart Count
+    function updateQuickCartCount() {
+        const quickCartCount = document.getElementById('quickCartCount');
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        if (quickCartCount) {
+            quickCartCount.textContent = totalItems;
+            quickCartCount.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+    }
+    
+    // Product Display
+    function displayProducts() {
+        const container = document.getElementById('productsContainer');
+        if (!container) return;
+        
+        let filteredProducts = [...products];
+        
+        // Apply filters and sorting here if needed
+        
+        // Display products
+        container.innerHTML = filteredProducts
+            .slice(0, currentPage * itemsPerPage)
+            .map((product, index) => createProductCard(product, index))
+            .join('');
+    }
+    
+    // Mobile Features
+    function setupMobileFeatures() {
+        // Add mobile-specific event listeners
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+        }
+        
+        // Handle mobile menu
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        }
+    }
+    
+    // Notification Setup
+    function setupNotifications() {
+        // Check if notifications are supported
+        if ('Notification' in window && Notification.permission === 'default') {
+            // Show notification banner after a delay
+            setTimeout(() => {
+                const banner = document.getElementById('notificationBanner');
+                if (banner) banner.style.display = 'block';
+            }, 5000);
+        }
+    }
+    
+    // Error Handling
+    function setupErrorHandling() {
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            // Log to analytics if available
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+    }
+    
+    // Analytics Tracking
+    function trackEvent(eventName, eventData = {}) {
+        // Implement your analytics tracking here
+        console.log('Track event:', eventName, eventData);
+        
+        // Example: Google Analytics
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, eventData);
+        }
+    }
+    
+    // Notification System
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas ${getNotificationIcon(type)}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        return icons[type] || icons.info;
+    }
+    
+    // Utility Functions
+    function getStockStatus(stock) {
+        if (stock <= 0) {
+            return { text: 'Out of Stock', class: 'out-of-stock' };
+        } else if (stock <= 5) {
+            return { text: `Only ${stock} left!`, class: 'low-stock' };
+        } else {
+            return { text: 'In Stock', class: 'in-stock' };
+        }
+    }
+    
+    function getProductIcon(category) {
+        const icons = {
+            'rice-pasta': 'fa-utensils',
+            'soups': 'fa-bowl-hot',
+            'pastries': 'fa-bread-slice',
+            'cakes': 'fa-birthday-cake',
+            'drinks': 'fa-glass-cheers',
+            'snacks': 'fa-cookie-bite'
+        };
+        return icons[category] || 'fa-utensils';
+    }
+    
+    function getCategoryName(category) {
+        const names = {
+            'rice-pasta': 'Rice & Pasta',
+            'soups': 'Soups & Stews',
+            'pastries': 'Pastries',
+            'cakes': 'Cakes',
+            'drinks': 'Drinks',
+            'snacks': 'Snacks'
+        };
+        return names[category] || category;
+    }
+    
+    // Cart Toggle
+    function toggleCart() {
+        const cartSidebar = document.getElementById('cartSidebar');
+        const cartOverlay = document.getElementById('cartOverlay');
+        
+        if (cartSidebar) {
+            cartSidebar.classList.toggle('active');
+            if (cartOverlay) {
+                cartOverlay.style.display = cartSidebar.classList.contains('active') ? 'block' : 'none';
+            }
+        }
+    }
+    
+    // Cart Summary Update
+    function updateCartSummary() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const currentDeliveryFee = isDeliveryMode && subtotal < freeDeliveryThreshold ? deliveryFee : 0;
+        const total = subtotal + currentDeliveryFee;
+        
+        document.getElementById('cartSubtotal').textContent = `₦${subtotal.toLocaleString()}`;
+        document.getElementById('cartDeliveryFee').textContent = 
+            isDeliveryMode ? 
+            (subtotal >= freeDeliveryThreshold ? 'FREE' : `₦${currentDeliveryFee.toLocaleString()}`) : 
+            'Pickup';
+        document.getElementById('cartTotal').textContent = `₦${total.toLocaleString()}`;
+    }
+    
+    // Checkout Functions
+    function showCheckoutForm() {
+        if (cart.length === 0) {
+            showNotification('Your cart is empty', 'warning');
+            return;
+        }
+        
+        const modal = document.getElementById('checkoutModal');
+        const overlay = document.getElementById('checkoutOverlay');
+        
+        if (modal && overlay) {
+            modal.classList.add('active');
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function closeCheckoutForm() {
+        const modal = document.getElementById('checkoutModal');
+        const overlay = document.getElementById('checkoutOverlay');
+        
+        if (modal && overlay) {
+            modal.classList.remove('active');
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    // Deal Functions
+    function addDealToCart(dealId) {
+        // Implementation for adding deals to cart
+        showNotification('Deal added to cart!', 'success');
+    }
+    
+    // Utility Functions
+    function refreshData() {
+        loadDeals();
+        displayProducts();
+        updateDealTimers();
+    }
+    
+    function clearAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('sortSelect').value = 'popularity';
+        displayProducts();
+    }
+    
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function scrollToProducts() {
+        const productsSection = document.getElementById('productsSection');
+        if (productsSection) {
+            productsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+    
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+    }
+    
+    function loadMoreProducts() {
+        currentPage++;
+        displayProducts();
+    }
+    
+    // Notification Permission
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    showNotification('Notifications enabled!', 'success');
+                }
+            });
+        }
+    }
+    
+    function dismissNotificationBanner() {
+        const banner = document.getElementById('notificationBanner');
+        if (banner) banner.style.display = 'none';
+    }
+    
+    // PWA Functions
+    function installApp() {
+        // PWA installation logic
+        showNotification('App installation started', 'info');
+    }
+    
+    function dismissInstallBanner() {
+        const banner = document.getElementById('installBanner');
+        if (banner) banner.style.display = 'none';
+    }
+    
+    function retryConnection() {
+        location.reload();
+    }
+    
+    // Helper Functions
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    function handleSearch(event) {
+        const searchTerm = event.target.value.toLowerCase();
+        // Implement search logic
+        displayProducts();
+    }
+    
+    function handleCategoryFilter(event) {
+        const category = event.target.value;
+        // Implement category filter
+        displayProducts();
+    }
+    
+    function handleSortChange(event) {
+        const sortBy = event.target.value;
+        // Implement sorting
+        displayProducts();
+    }
+    
+    function handleDeliveryToggle(event) {
+        isDeliveryMode = event.target.checked;
+        localStorage.setItem('naijabites_delivery_mode', isDeliveryMode);
+        updateCartSummary();
+    }
+    
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) {
+            mobileMenu.classList.toggle('active');
+        }
+    }
+    
+    function updateDealTimers() {
+        // Update countdown timers for deals
+    }
+    
+    function getPickupTimeText(timeValue) {
+        const times = {
+            'asap': 'As soon as possible',
+            '30min': 'In 30 minutes',
+            '1hour': 'In 1 hour',
+            '2hours': 'In 2 hours'
+        };
+        return times[timeValue] || timeValue;
+    }
+
+// =============================================================================
 // END OF ENHANCED SCRIPT - BATCH 1
 // =============================================================================
 
@@ -2236,6 +2775,16 @@ window.removeFromCart = removeFromCart;
 window.showLocationModal = showLocationModal;
 window.hideLocationModal = hideLocationModal;
 window.handleLocationSelection = handleLocationSelection;
+
+// Export missing functions
+window.showLoadingOverlay = showLoadingOverlay;
+window.hideLoadingOverlay = hideLoadingOverlay;
+window.trackEvent = trackEvent;
+window.showNotification = showNotification;
+window.showSavedDesigns = showSavedDesigns;
+window.closeSavedDesigns = closeSavedDesigns;
+window.loadSavedDesign = loadSavedDesign;
+window.deleteSavedDesign = deleteSavedDesign;
 
 // Product customization (Batch 1)
 window.openProductCustomization = openProductCustomization;
