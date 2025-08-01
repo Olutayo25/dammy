@@ -2227,44 +2227,25 @@ function createProductCard(product, index) {
 // =============================================================================
 
 // Core product functions
-// Export new functions for global access
-window.openProductCustomization = openProductCustomization;
-window.closeProductModal = closeProductModal;
-window.selectVariant = selectVariant;
-window.toggleAddon = toggleAddon;
-window.updateModalQuantity = updateModalQuantity;
-window.addCustomizedToCart = addCustomizedToCart;
-window.editCartItem = editCartItem;
-window.updateCartItemQuantity = updateCartItemQuantity;
-window.setCartItemQuantity = setCartItemQuantity;
-window.dismissEnhancementBanner = dismissEnhancementBanner;
 window.addToCart = addToCart;
 window.updateQuantity = updateQuantity;
 window.setQuantity = setQuantity;
 window.removeFromCart = removeFromCart;
-window.toggleCart = toggleCart;
-window.showCheckoutForm = showCheckoutForm;
-window.closeCheckoutForm = closeCheckoutForm;
-window.refreshData = refreshData;
-window.clearAllFilters = clearAllFilters;
-window.scrollToTop = scrollToTop;
-window.scrollToProducts = scrollToProducts;
-window.toggleTheme = toggleTheme;
-window.installApp = installApp;
-window.dismissInstallBanner = dismissInstallBanner;
-window.retryConnection = retryConnection;
-window.loadMoreProducts = loadMoreProducts;
 
 // Location functions
 window.showLocationModal = showLocationModal;
 window.hideLocationModal = hideLocationModal;
 window.handleLocationSelection = handleLocationSelection;
 
-// Notification functions
-window.requestNotificationPermission = requestNotificationPermission;
-window.dismissNotificationBanner = dismissNotificationBanner;
+// Product customization (Batch 1)
+window.openProductCustomization = openProductCustomization;
+window.closeProductModal = closeProductModal;
+window.selectVariant = selectVariant;
+window.toggleAddon = toggleAddon;
+window.updateModalQuantity = updateModalQuantity;
+window.addCustomizedToCart = addCustomizedToCart;
 
-// Export cake builder functions
+// Cake builder (Batch 2)
 window.openCakeBuilder = openCakeBuilder;
 window.closeCakeBuilder = closeCakeBuilder;
 window.selectCakeSize = selectCakeSize;
@@ -2281,11 +2262,38 @@ window.switchDesignTab = switchDesignTab;
 window.rotateCake = rotateCake;
 window.resetCakeView = resetCakeView;
 window.saveCakeDesign = saveCakeDesign;
-window.showSavedDesigns = showSavedDesigns;
-window.closeSavedDesigns = closeSavedDesigns;
-window.loadSavedDesign = loadSavedDesign;
-window.deleteSavedDesign = deleteSavedDesign;
 window.addCakeToCart = addCakeToCart;
+
+// Cart functions
+window.toggleCart = toggleCart;
+window.updateCartItemQuantity = updateCartItemQuantity;
+window.setCartItemQuantity = setCartItemQuantity;
+window.editCartItem = editCartItem;
+
+// Checkout functions
+window.showCheckoutForm = showCheckoutForm;
+window.closeCheckoutForm = closeCheckoutForm;
+
+// Deals functions
+window.addDealToCart = addDealToCart;
+
+// Utility functions
+window.refreshData = refreshData;
+window.clearAllFilters = clearAllFilters;
+window.scrollToTop = scrollToTop;
+window.scrollToProducts = scrollToProducts;
+window.toggleTheme = toggleTheme;
+window.loadMoreProducts = loadMoreProducts;
+
+// Notification functions
+window.requestNotificationPermission = requestNotificationPermission;
+window.dismissNotificationBanner = dismissNotificationBanner;
+window.dismissEnhancementBanner = dismissEnhancementBanner;
+
+// PWA functions
+window.installApp = installApp;
+window.dismissInstallBanner = dismissInstallBanner;
+window.retryConnection = retryConnection;
 
 // =============================================================================
 // FINAL INITIALIZATION MESSAGE
