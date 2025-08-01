@@ -540,6 +540,282 @@
             </button>
         </div>
     </div>
+
+    <!-- Add this after your product modal section -->
+    <!-- Interactive Cake Builder Modal -->
+    <div class="cake-builder-modal" id="cakeBuilderModal">
+        <div class="cake-builder-content">
+            <div class="cake-builder-header">
+                <h3><i class="fas fa-magic"></i> Design Your Perfect Cake</h3>
+                <button class="close-cake-builder" onclick="closeCakeBuilder()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="cake-builder-body">
+                <!-- Visual Preview Section -->
+                <div class="cake-preview-section">
+                    <div class="cake-canvas-container">
+                        <canvas id="cakeCanvas" width="400" height="400"></canvas>
+                        <div class="preview-controls">
+                            <button class="preview-btn" onclick="rotateCake(-90)">
+                                <i class="fas fa-undo"></i> Rotate Left
+                            </button>
+                            <button class="preview-btn" onclick="rotateCake(90)">
+                                <i class="fas fa-redo"></i> Rotate Right
+                            </button>
+                            <button class="preview-btn" onclick="resetCakeView()">
+                                <i class="fas fa-home"></i> Reset View
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="cake-info-display">
+                        <div class="cake-size-display">
+                            <i class="fas fa-ruler"></i>
+                            <span id="cakeSizeDisplay">Select a size</span>
+                        </div>
+                        <div class="cake-serves-display">
+                            <i class="fas fa-users"></i>
+                            <span id="cakeServesDisplay">Select size to see servings</span>
+                        </div>
+                        <div class="cake-price-display">
+                            <span class="live-price" id="cakeLivePrice">₦0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Design Controls Section -->
+                <div class="cake-design-section">
+                    <div class="design-tabs">
+                        <button class="design-tab active" data-tab="basics" onclick="switchDesignTab('basics')">
+                            <i class="fas fa-cookie-bite"></i> Basics
+                        </button>
+                        <button class="design-tab" data-tab="decorations" onclick="switchDesignTab('decorations')">
+                            <i class="fas fa-palette"></i> Decorations
+                        </button>
+                        <button class="design-tab" data-tab="text" onclick="switchDesignTab('text')">
+                            <i class="fas fa-font"></i> Message
+                        </button>
+                        <button class="design-tab" data-tab="extras" onclick="switchDesignTab('extras')">
+                            <i class="fas fa-plus-circle"></i> Extras
+                        </button>
+                    </div>
+                    
+                    <!-- Basics Tab -->
+                    <div class="design-tab-content active" id="basicsTab">
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-expand-arrows-alt"></i> Cake Size</h4>
+                            <div class="size-options">
+                                <div class="size-option" data-size="small" onclick="selectCakeSize('small')">
+                                    <div class="size-visual small-cake"></div>
+                                    <div class="size-details">
+                                        <span class="size-name">Small (6")</span>
+                                        <span class="size-serves">4-6 people</span>
+                                        <span class="size-price">₦8,000</span>
+                                    </div>
+                                </div>
+                                <div class="size-option" data-size="medium" onclick="selectCakeSize('medium')">
+                                    <div class="size-visual medium-cake"></div>
+                                    <div class="size-details">
+                                        <span class="size-name">Medium (8")</span>
+                                        <span class="size-serves">8-10 people</span>
+                                        <span class="size-price">₦11,000</span>
+                                    </div>
+                                </div>
+                                <div class="size-option" data-size="large" onclick="selectCakeSize('large')">
+                                    <div class="size-visual large-cake"></div>
+                                    <div class="size-details">
+                                        <span class="size-name">Large (10")</span>
+                                        <span class="size-serves">12-15 people</span>
+                                        <span class="size-price">₦14,000</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-birthday-cake"></i> Flavor</h4>
+                            <div class="flavor-grid">
+                                <div class="flavor-option" data-flavor="vanilla" onclick="selectCakeFlavor('vanilla')">
+                                    <div class="flavor-color vanilla-color"></div>
+                                    <span>Vanilla</span>
+                                </div>
+                                <div class="flavor-option" data-flavor="chocolate" onclick="selectCakeFlavor('chocolate')">
+                                    <div class="flavor-color chocolate-color"></div>
+                                    <span>Chocolate (+₦500)</span>
+                                </div>
+                                <div class="flavor-option" data-flavor="red-velvet" onclick="selectCakeFlavor('red-velvet')">
+                                    <div class="flavor-color red-velvet-color"></div>
+                                    <span>Red Velvet (+₦1,000)</span>
+                                </div>
+                                <div class="flavor-option" data-flavor="carrot" onclick="selectCakeFlavor('carrot')">
+                                    <div class="flavor-color carrot-color"></div>
+                                    <span>Carrot (+₦800)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-shapes"></i> Shape</h4>
+                            <div class="shape-options">
+                                <div class="shape-option" data-shape="round" onclick="selectCakeShape('round')">
+                                    <div class="shape-visual round-shape"></div>
+                                    <span>Round</span>
+                                </div>
+                                <div class="shape-option" data-shape="square" onclick="selectCakeShape('square')">
+                                    <div class="shape-visual square-shape"></div>
+                                    <span>Square (+₦500)</span>
+                                </div>
+                                <div class="shape-option" data-shape="heart" onclick="selectCakeShape('heart')">
+                                    <div class="shape-visual heart-shape"></div>
+                                    <span>Heart (+₦1,500)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Decorations Tab -->
+                    <div class="design-tab-content" id="decorationsTab">
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-palette"></i> Frosting Color</h4>
+                            <div class="color-palette">
+                                <div class="color-option" data-color="white" style="background: #ffffff" onclick="selectFrostingColor('white')"></div>
+                                <div class="color-option" data-color="pink" style="background: #ffb6c1" onclick="selectFrostingColor('pink')"></div>
+                                <div class="color-option" data-color="blue" style="background: #87ceeb" onclick="selectFrostingColor('blue')"></div>
+                                <div class="color-option" data-color="yellow" style="background: #ffffe0" onclick="selectFrostingColor('yellow')"></div>
+                                <div class="color-option" data-color="green" style="background: #98fb98" onclick="selectFrostingColor('green')"></div>
+                                <div class="color-option" data-color="purple" style="background: #dda0dd" onclick="selectFrostingColor('purple')"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-star"></i> Decorative Elements</h4>
+                            <div class="decoration-grid">
+                                <div class="decoration-item" data-decoration="flowers" onclick="toggleDecoration('flowers')">
+                                    <i class="fas fa-flower"></i>
+                                    <span>Flowers (+₦800)</span>
+                                </div>
+                                <div class="decoration-item" data-decoration="stars" onclick="toggleDecoration('stars')">
+                                    <i class="fas fa-star"></i>
+                                    <span>Stars (+₦600)</span>
+                                </div>
+                                <div class="decoration-item" data-decoration="hearts" onclick="toggleDecoration('hearts')">
+                                    <i class="fas fa-heart"></i>
+                                    <span>Hearts (+₦600)</span>
+                                </div>
+                                <div class="decoration-item" data-decoration="ribbons" onclick="toggleDecoration('ribbons')">
+                                    <i class="fas fa-ribbon"></i>
+                                    <span>Ribbons (+₦700)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Text Tab -->
+                    <div class="design-tab-content" id="textTab">
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-font"></i> Custom Message</h4>
+                            <div class="text-input-section">
+                                <input type="text" id="cakeMessageInput" placeholder="Enter your message..." maxlength="30" oninput="updateCakeText()">
+                                <div class="text-style-options">
+                                    <select id="textFont" onchange="updateTextStyle()">
+                                        <option value="arial">Arial</option>
+                                        <option value="georgia">Georgia</option>
+                                        <option value="cursive">Cursive</option>
+                                    </select>
+                                    <div class="text-color-options">
+                                        <div class="text-color" data-color="#000000" style="background: #000000" onclick="selectTextColor('#000000')"></div>
+                                        <div class="text-color" data-color="#ffffff" style="background: #ffffff" onclick="selectTextColor('#ffffff')"></div>
+                                        <div class="text-color" data-color="#ff0000" style="background: #ff0000" onclick="selectTextColor('#ff0000')"></div>
+                                        <div class="text-color" data-color="#0000ff" style="background: #0000ff" onclick="selectTextColor('#0000ff')"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-position-controls">
+                                <h5>Text Position</h5>
+                                <div class="position-options">
+                                    <button class="position-btn" data-position="top" onclick="setTextPosition('top')">Top</button>
+                                    <button class="position-btn active" data-position="center" onclick="setTextPosition('center')">Center</button>
+                                    <button class="position-btn" data-position="bottom" onclick="setTextPosition('bottom')">Bottom</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Extras Tab -->
+                    <div class="design-tab-content" id="extrasTab">
+                        <div class="design-option-group">
+                            <h4><i class="fas fa-plus-circle"></i> Add-ons</h4>
+                            <div class="extras-list">
+                                <label class="extra-item">
+                                    <input type="checkbox" data-extra="candles" onchange="toggleExtra('candles', 500)">
+                                    <div class="extra-info">
+                                        <span class="extra-name">Birthday Candles Set</span>
+                                        <span class="extra-price">+₦500</span>
+                                    </div>
+                                </label>
+                                <label class="extra-item">
+                                    <input type="checkbox" data-extra="topper" onchange="toggleExtra('topper', 2000)">
+                                    <div class="extra-info">
+                                        <span class="extra-name">Custom Cake Topper</span>
+                                        <span class="extra-price">+₦2,000</span>
+                                    </div>
+                                </label>
+                                <label class="extra-item">
+                                    <input type="checkbox" data-extra="box" onchange="toggleExtra('box', 800)">
+                                    <div class="extra-info">
+                                        <span class="extra-name">Premium Gift Box</span>
+                                        <span class="extra-price">+₦800</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cake-builder-footer">
+                <div class="design-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Estimated Time:</span>
+                        <span class="summary-value" id="estimatedTime">2-3 hours</span>
+                    </div>
+                    <div class="total-price-display">
+                        <span class="price-label">Total Price:</span>
+                        <span class="price-value" id="builderTotalPrice">₦8,000</span>
+                    </div>
+                </div>
+                <div class="builder-actions">
+                    <button class="btn-secondary" onclick="saveCakeDesign()">
+                        <i class="fas fa-save"></i> Save Design
+                    </button>
+                    <button class="btn-primary" onclick="addCakeToCart()">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cake Builder Overlay -->
+    <div class="cake-builder-overlay" id="cakeBuilderOverlay" onclick="closeCakeBuilder()"></div>
+    
+    <!-- Saved Designs Modal -->
+    <div class="saved-designs-modal" id="savedDesignsModal">
+        <div class="saved-designs-content">
+            <div class="saved-designs-header">
+                <h3><i class="fas fa-folder-open"></i> Your Saved Designs</h3>
+                <button class="close-saved-designs" onclick="closeSavedDesigns()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="saved-designs-grid" id="savedDesignsGrid">
+                <!-- Saved designs will be populated here -->
+            </div>
+        </div>
+    </div>
     
     <!-- Overlays -->
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
