@@ -1067,3 +1067,971 @@ console.log('🚀 Enhanced Naija Bites Customer App with Product Variants Loaded
 // =============================================================================
 // END OF ENHANCED SCRIPT - BATCH 1
 // =============================================================================
+
+// =============================================================================
+// NAIJA BITES - BATCH 2: INTERACTIVE CAKE BUILDER
+// Enhanced with Visual Cake Builder and Real-time Preview
+// =============================================================================
+
+// Cake Builder Variables
+let cakeDesign = {
+    size: null,
+    flavor: null,
+    shape: 'round',
+    frostingColor: 'white',
+    decorations: [],
+    text: {
+        message: '',
+        font: 'arial',
+        color: '#000000',
+        position: 'center'
+    },
+    extras: []
+};
+
+let cakeCanvas, cakeCtx;
+let cakeRotation = 0;
+let savedDesigns = [];
+
+// Canvas drawing settings
+const cakeSizes = {
+    small: { basePrice: 8000, radius: 80, height: 40 },
+    medium: { basePrice: 11000, radius: 100, height: 50 },
+    large: { basePrice: 14000, radius: 120, height: 60 }
+};
+
+const flavorPrices = {
+    vanilla: 0,
+    chocolate: 500,
+    'red-velvet': 1000,
+    carrot: 800
+};
+
+const shapePrices = {
+    round: 0,
+    square: 500,
+    heart: 1500
+};
+
+const decorationPrices = {
+    flowers: 800,
+    stars: 600,
+    hearts: 600,
+    ribbons: 700
+};
+
+// =============================================================================
+// CAKE BUILDER INITIALIZATION
+// =============================================================================
+
+function initializeCakeBuilder() {
+    cakeCanvas = document.getElementById('cakeCanvas');
+    if (cakeCanvas) {
+        cakeCtx = cakeCanvas.getContext('2d');
+        
+        // Set up high DPI canvas
+        const rect = cakeCanvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        
+        cakeCanvas.width = rect.width * dpr;
+        cakeCanvas.height = rect.height * dpr;
+        cakeCtx.scale(dpr, dpr);
+        
+        // Load saved designs
+        loadSavedDesigns();
+        
+        console.log('🎂 Cake Builder initialized');
+    }
+}
+
+function openCakeBuilder(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product || !product.isCustomizable) {
+        openProductCustomization(productId);
+        return;
+    }
+    
+    // Reset cake design
+    resetCakeDesign();
+    
+    // Initialize canvas if not already done
+    if (!cakeCanvas) {
+        initializeCakeBuilder();
+    }
+    
+    // Show modal
+    const modal = document.getElementById('cakeBuilderModal');
+    const overlay = document.getElementById('cakeBuilderOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.add('active');
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // Initial cake drawing
+        setTimeout(() => {
+            drawCake();
+            updateCakePrice();
+        }, 100);
+    }
+    
+    trackEvent('cake_builder_opened', {
+        productId: productId,
+        timestamp: new Date().toISOString()
+    });
+}
+
+function closeCakeBuilder() {
+    const modal = document.getElementById('cakeBuilderModal');
+    const overlay = document.getElementById('cakeBuilderOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.remove('active');
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function resetCakeDesign() {
+    cakeDesign = {
+        size: null,
+        flavor: null,
+        shape: 'round',
+        frostingColor: 'white',
+        decorations: [],
+        text: {
+            message: '',
+            font: 'arial',
+            color: '#000000',
+            position: 'center'
+        },
+        extras: []
+    };
+    
+    cakeRotation = 0;
+    
+    // Reset UI
+    document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.flavor-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.shape-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.decoration-item').forEach(el => el.classList.remove('selected'));
+    
+    // Reset form inputs
+    document.getElementById('cakeMessageInput').value = '';
+    document.getElementById('textFont').value = 'arial';
+    
+    // Clear checkboxes
+    document.querySelectorAll('.extra-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+}
+
+// =============================================================================
+// CAKE DESIGN FUNCTIONS
+// =============================================================================
+
+function selectCakeSize(size) {
+    cakeDesign.size = size;
+    
+    // Update UI
+    document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-size="${size}"]`).classList.add('selected');
+    
+    // Update displays
+    const sizeData = cakeSizes[size];
+    document.getElementById('cakeSizeDisplay').textContent = `${size.charAt(0).toUpperCase() + size.slice(1)} (${size === 'small' ? '6"' : size === 'medium' ? '8"' : '10"'})`;
+    document.getElementById('cakeServesDisplay').textContent = size === 'small' ? '4-6 people' : size === 'medium' ? '8-10 people' : '12-15 people';
+    
+    drawCake();
+    updateCakePrice();
+    
+    trackEvent('cake_size_selected', { size, price: sizeData.basePrice });
+}
+
+function selectCakeFlavor(flavor) {
+    cakeDesign.flavor = flavor;
+    
+    // Update UI
+    document.querySelectorAll('.flavor-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-flavor="${flavor}"]`).classList.add('selected');
+    
+    drawCake();
+    updateCakePrice();
+    
+    trackEvent('cake_flavor_selected', { flavor, priceModifier: flavorPrices[flavor] });
+}
+
+function selectCakeShape(shape) {
+    cakeDesign.shape = shape;
+    
+    // Update UI
+    document.querySelectorAll('.shape-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-shape="${shape}"]`).classList.add('selected');
+    
+    drawCake();
+    updateCakePrice();
+    
+    trackEvent('cake_shape_selected', { shape, priceModifier: shapePrices[shape] });
+}
+
+function selectFrostingColor(color) {
+    cakeDesign.frostingColor = color;
+    
+    // Update UI
+    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-color="${color}"]`).classList.add('selected');
+    
+    drawCake();
+    
+    trackEvent('frosting_color_selected', { color });
+}
+
+function toggleDecoration(decoration) {
+    const index = cakeDesign.decorations.indexOf(decoration);
+    const decorationEl = document.querySelector(`[data-decoration="${decoration}"]`);
+    
+    if (index > -1) {
+        cakeDesign.decorations.splice(index, 1);
+        decorationEl.classList.remove('selected');
+    } else {
+        cakeDesign.decorations.push(decoration);
+        decorationEl.classList.add('selected');
+    }
+    
+    drawCake();
+    updateCakePrice();
+    
+    trackEvent('decoration_toggled', { 
+        decoration, 
+        action: index > -1 ? 'removed' : 'added',
+        totalDecorations: cakeDesign.decorations.length 
+    });
+}
+
+function updateCakeText() {
+    const input = document.getElementById('cakeMessageInput');
+    cakeDesign.text.message = input.value;
+    
+    drawCake();
+    
+    trackEvent('cake_text_updated', { messageLength: input.value.length });
+}
+
+function updateTextStyle() {
+    const font = document.getElementById('textFont').value;
+    cakeDesign.text.font = font;
+    
+    drawCake();
+}
+
+function selectTextColor(color) {
+    cakeDesign.text.color = color;
+    
+    // Update UI
+    document.querySelectorAll('.text-color').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-color="${color}"]`).classList.add('selected');
+    
+    drawCake();
+}
+
+function setTextPosition(position) {
+    cakeDesign.text.position = position;
+    
+    // Update UI
+    document.querySelectorAll('.position-btn').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-position="${position}"]`).classList.add('active');
+    
+    drawCake();
+}
+
+function toggleExtra(extra, price) {
+    const checkbox = document.querySelector(`[data-extra="${extra}"]`);
+    const index = cakeDesign.extras.findIndex(e => e.id === extra);
+    
+    if (checkbox.checked) {
+        if (index === -1) {
+            cakeDesign.extras.push({ id: extra, price: price });
+        }
+    } else {
+        if (index > -1) {
+            cakeDesign.extras.splice(index, 1);
+        }
+    }
+    
+    updateCakePrice();
+    
+    trackEvent('cake_extra_toggled', { 
+        extra, 
+        price, 
+        action: checkbox.checked ? 'added' : 'removed' 
+    });
+}
+
+// =============================================================================
+// CANVAS DRAWING FUNCTIONS
+// =============================================================================
+
+function drawCake() {
+    if (!cakeCtx || !cakeCanvas) return;
+    
+    // Clear canvas
+    cakeCtx.clearRect(0, 0, cakeCanvas.width, cakeCanvas.height);
+    
+    // Set up drawing context
+    cakeCtx.save();
+    cakeCtx.translate(200, 200); // Center of canvas
+    cakeCtx.rotate((cakeRotation * Math.PI) / 180);
+    
+    if (cakeDesign.size) {
+        const size = cakeSizes[cakeDesign.size];
+        
+        // Draw cake base based on shape
+        drawCakeBase(size);
+        
+        // Draw decorations
+        drawDecorations(size);
+        
+        // Draw text
+        drawText(size);
+    } else {
+        // Draw placeholder
+        drawPlaceholder();
+    }
+    
+    cakeCtx.restore();
+}
+
+function drawCakeBase(size) {
+    const { radius, height } = size;
+    
+    // Get colors based on flavor and frosting
+    const flavorColor = getFlavorColor(cakeDesign.flavor);
+    const frostingColor = cakeDesign.frostingColor;
+    
+    // Draw shadow
+    cakeCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    cakeCtx.beginPath();
+    if (cakeDesign.shape === 'round') {
+        cakeCtx.ellipse(5, height + 5, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+    } else if (cakeDesign.shape === 'square') {
+        cakeCtx.fillRect(-radius + 5, -radius * 0.7 + height + 5, radius * 2, radius * 2);
+    }
+    cakeCtx.fill();
+    
+    // Draw cake layers
+    for (let layer = 0; layer < 2; layer++) {
+        const layerY = height * layer * 0.8;
+        
+        // Cake body
+        cakeCtx.fillStyle = flavorColor;
+        cakeCtx.beginPath();
+        
+        if (cakeDesign.shape === 'round') {
+            // Round cake
+            cakeCtx.ellipse(0, layerY, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+            cakeCtx.fill();
+            
+            // Cake side
+            cakeCtx.fillStyle = darkenColor(flavorColor, 0.8);
+            cakeCtx.fillRect(-radius, layerY - height/2, radius * 2, height);
+            
+            // Top frosting
+            cakeCtx.fillStyle = frostingColor;
+            cakeCtx.beginPath();
+            cakeCtx.ellipse(0, layerY - height/2, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+            cakeCtx.fill();
+            
+        } else if (cakeDesign.shape === 'square') {
+            // Square cake
+            cakeCtx.fillRect(-radius, layerY - height/2, radius * 2, height);
+            cakeCtx.fill();
+            
+            // Top frosting
+            cakeCtx.fillStyle = frostingColor;
+            cakeCtx.fillRect(-radius, layerY - height/2, radius * 2, 10);
+            
+        } else if (cakeDesign.shape === 'heart') {
+            // Heart shape (simplified)
+            drawHeartShape(0, layerY, radius, flavorColor, frostingColor, height);
+        }
+    }
+}
+
+function drawHeartShape(x, y, size, fillColor, frostingColor, height) {
+    cakeCtx.fillStyle = fillColor;
+    cakeCtx.beginPath();
+    
+    // Draw heart using curves
+    const topCurveHeight = size * 0.3;
+    cakeCtx.moveTo(x, y - height/2);
+    cakeCtx.bezierCurveTo(x, y - height/2 - topCurveHeight, x - size/2, y - height/2 - topCurveHeight, x - size/2, y - height/2);
+    cakeCtx.bezierCurveTo(x - size/2, y - height/2 + topCurveHeight, x, y, x, y + size/2);
+    cakeCtx.bezierCurveTo(x, y, x + size/2, y - height/2 + topCurveHeight, x + size/2, y - height/2);
+    cakeCtx.bezierCurveTo(x + size/2, y - height/2 - topCurveHeight, x, y - height/2 - topCurveHeight, x, y - height/2);
+    
+    cakeCtx.fill();
+    
+    // Heart frosting
+    cakeCtx.fillStyle = frostingColor;
+    cakeCtx.fill();
+}
+
+function drawDecorations(size) {
+    const { radius } = size;
+    
+    cakeDesign.decorations.forEach((decoration, index) => {
+        const angle = (index * 60) * Math.PI / 180; // Spread decorations around
+        const x = Math.cos(angle) * radius * 0.7;
+        const y = Math.sin(angle) * radius * 0.3;
+        
+        cakeCtx.save();
+        cakeCtx.translate(x, y - 20);
+        
+        switch (decoration) {
+            case 'flowers':
+                drawFlower();
+                break;
+            case 'stars':
+                drawStar();
+                break;
+            case 'hearts':
+                drawSmallHeart();
+                break;
+            case 'ribbons':
+                drawRibbon();
+                break;
+        }
+        
+        cakeCtx.restore();
+    });
+}
+
+function drawFlower() {
+    cakeCtx.fillStyle = '#ff69b4';
+    for (let i = 0; i < 5; i++) {
+        cakeCtx.save();
+        cakeCtx.rotate((i * 72) * Math.PI / 180);
+        cakeCtx.beginPath();
+        cakeCtx.ellipse(0, -8, 4, 8, 0, 0, 2 * Math.PI);
+        cakeCtx.fill();
+        cakeCtx.restore();
+    }
+    
+    // Center
+    cakeCtx.fillStyle = '#ffd700';
+    cakeCtx.beginPath();
+    cakeCtx.arc(0, 0, 3, 0, 2 * Math.PI);
+    cakeCtx.fill();
+}
+
+function drawStar() {
+    cakeCtx.fillStyle = '#ffd700';
+    cakeCtx.beginPath();
+    
+    for (let i = 0; i < 5; i++) {
+        const angle = (i * 144) * Math.PI / 180;
+        const x = Math.cos(angle) * 8;
+        const y = Math.sin(angle) * 8;
+        
+        if (i === 0) {
+            cakeCtx.moveTo(x, y);
+        } else {
+            cakeCtx.lineTo(x, y);
+        }
+        
+        // Inner point
+        const innerAngle = ((i * 144) + 72) * Math.PI / 180;
+        const innerX = Math.cos(innerAngle) * 4;
+        const innerY = Math.sin(innerAngle) * 4;
+        cakeCtx.lineTo(innerX, innerY);
+    }
+    
+    cakeCtx.closePath();
+    cakeCtx.fill();
+}
+
+function drawSmallHeart() {
+    cakeCtx.fillStyle = '#ff1493';
+    cakeCtx.beginPath();
+    cakeCtx.moveTo(0, 4);
+    cakeCtx.bezierCurveTo(-6, -2, -12, 2, 0, 12);
+    cakeCtx.bezierCurveTo(12, 2, 6, -2, 0, 4);
+    cakeCtx.fill();
+}
+
+function drawRibbon() {
+    cakeCtx.fillStyle = '#ff6347';
+    cakeCtx.fillRect(-10, -2, 20, 4);
+    
+    // Ribbon ends
+    cakeCtx.beginPath();
+    cakeCtx.moveTo(-10, -2);
+    cakeCtx.lineTo(-15, 0);
+    cakeCtx.lineTo(-10, 2);
+    cakeCtx.fill();
+    
+    cakeCtx.beginPath();
+    cakeCtx.moveTo(10, -2);
+    cakeCtx.lineTo(15, 0);
+    cakeCtx.lineTo(10, 2);
+    cakeCtx.fill();
+}
+
+function drawText(size) {
+    if (!cakeDesign.text.message) return;
+    
+    const { radius } = size;
+    const { message, font, color, position } = cakeDesign.text;
+    
+    // Set font
+    cakeCtx.font = `bold 16px ${font}`;
+    cakeCtx.fillStyle = color;
+    cakeCtx.textAlign = 'center';
+    
+    // Position text
+    let y = 0;
+    switch (position) {
+        case 'top':
+            y = -radius * 0.5;
+            break;
+        case 'center':
+            y = 0;
+            break;
+        case 'bottom':
+            y = radius * 0.3;
+            break;
+    }
+    
+    // Draw text with outline for better visibility
+    cakeCtx.strokeStyle = color === '#ffffff' ? '#000000' : '#ffffff';
+    cakeCtx.lineWidth = 1;
+    cakeCtx.strokeText(message, 0, y);
+    cakeCtx.fillText(message, 0, y);
+}
+
+function drawPlaceholder() {
+    cakeCtx.fillStyle = '#f0f0f0';
+    cakeCtx.strokeStyle = '#ccc';
+    cakeCtx.lineWidth = 2;
+    cakeCtx.setLineDash([10, 5]);
+    
+    cakeCtx.beginPath();
+    cakeCtx.arc(0, 0, 80, 0, 2 * Math.PI);
+    cakeCtx.stroke();
+    cakeCtx.fill();
+    
+    cakeCtx.setLineDash([]);
+    cakeCtx.fillStyle = '#999';
+    cakeCtx.font = '16px Arial';
+    cakeCtx.textAlign = 'center';
+    cakeCtx.fillText('Select a size', 0, -10);
+    cakeCtx.fillText('to start designing', 0, 10);
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+function getFlavorColor(flavor) {
+    const colors = {
+        vanilla: '#fff8dc',
+        chocolate: '#8b4513',
+        'red-velvet': '#dc143c',
+        carrot: '#ff8c00'
+    };
+    return colors[flavor] || '#fff8dc';
+}
+
+function darkenColor(color, factor) {
+    // Simple color darkening
+    if (color.startsWith('#')) {
+        const hex = color.slice(1);
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        return `rgb(${Math.floor(r * factor)}, ${Math.floor(g * factor)}, ${Math.floor(b * factor)})`;
+    }
+    return color;
+}
+
+function rotateCake(degrees) {
+    cakeRotation += degrees;
+    drawCake();
+    
+    trackEvent('cake_rotated', { degrees, totalRotation: cakeRotation });
+}
+
+function resetCakeView() {
+    cakeRotation = 0;
+    drawCake();
+}
+
+function updateCakePrice() {
+    let totalPrice = 0;
+    
+    // Base price from size
+    if (cakeDesign.size) {
+        totalPrice += cakeSizes[cakeDesign.size].basePrice;
+    }
+    
+    // Flavor modifier
+    if (cakeDesign.flavor) {
+        totalPrice += flavorPrices[cakeDesign.flavor];
+    }
+    
+    // Shape modifier
+    totalPrice += shapePrices[cakeDesign.shape];
+    
+    // Decorations
+    cakeDesign.decorations.forEach(decoration => {
+        totalPrice += decorationPrices[decoration];
+    });
+    
+    // Extras
+    cakeDesign.extras.forEach(extra => {
+        totalPrice += extra.price;
+    });
+    
+    // Update displays
+    document.getElementById('cakeLivePrice').textContent = `₦${totalPrice.toLocaleString()}`;
+    document.getElementById('builderTotalPrice').textContent = `₦${totalPrice.toLocaleString()}`;
+    
+    // Update estimated time based on complexity
+    const complexity = cakeDesign.decorations.length + (cakeDesign.text.message ? 1 : 0) + cakeDesign.extras.length;
+    const baseTime = cakeDesign.size === 'large' ? 180 : cakeDesign.size === 'medium' ? 150 : 120; // minutes
+    const totalTime = baseTime + (complexity * 30);
+    
+    const hours = Math.floor(totalTime / 60);
+    const minutes = totalTime % 60;
+    document.getElementById('estimatedTime').textContent = `${hours}h ${minutes}m`;
+}
+
+// =============================================================================
+// TAB SWITCHING
+// =============================================================================
+
+function switchDesignTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.design-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.tab === tabName) {
+            tab.classList.add('active');
+        }
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.design-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+    
+    trackEvent('design_tab_switched', { tab: tabName });
+}
+
+// =============================================================================
+// SAVE/LOAD DESIGNS
+// =============================================================================
+
+function saveCakeDesign() {
+    if (!cakeDesign.size) {
+        showNotification('Please select a cake size before saving', 'warning');
+        return;
+    }
+    
+    const design = {
+        id: generateDesignId(),
+        name: cakeDesign.text.message || `${cakeDesign.size} ${cakeDesign.flavor || 'cake'}`,
+        design: { ...cakeDesign },
+        price: calculateCakePrice(),
+        savedAt: new Date().toISOString()
+    };
+    
+    savedDesigns.push(design);
+    localStorage.setItem('naijabites_saved_designs', JSON.stringify(savedDesigns));
+    
+    showNotification('Cake design saved successfully!', 'success');
+    
+    trackEvent('cake_design_saved', {
+        designId: design.id,
+        price: design.price,
+        complexity: cakeDesign.decorations.length + cakeDesign.extras.length
+    });
+}
+
+function loadSavedDesigns() {
+    try {
+        const saved = localStorage.getItem('naijabites_saved_designs');
+        if (saved) {
+            savedDesigns = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Error loading saved designs:', error);
+        savedDesigns = [];
+    }
+}
+
+function showSavedDesigns() {
+    const modal = document.getElementById('savedDesignsModal');
+    const grid = document.getElementById('savedDesignsGrid');
+    
+    if (savedDesigns.length === 0) {
+        grid.innerHTML = `
+            <div class="no-saved-designs">
+                <i class="fas fa-folder-open"></i>
+                <h4>No Saved Designs</h4>
+                <p>Start creating and save your favorite cake designs!</p>
+            </div>
+        `;
+    } else {
+        grid.innerHTML = savedDesigns.map(design => `
+            <div class="saved-design-card" onclick="loadSavedDesign('${design.id}')">
+                <div class="design-preview">
+                    <i class="fas fa-birthday-cake"></i>
+                </div>
+                <div class="design-info">
+                    <h5>${design.name}</h5>
+                    <p>₦${design.price.toLocaleString()}</p>
+                    <small>Saved ${formatDate(design.savedAt)}</small>
+                </div>
+                <button class="delete-design" onclick="deleteSavedDesign('${design.id}', event)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+    
+    modal.classList.add('active');
+}
+
+function closeSavedDesigns() {
+    document.getElementById('savedDesignsModal').classList.remove('active');
+}
+
+function loadSavedDesign(designId) {
+    const design = savedDesigns.find(d => d.id === designId);
+    if (design) {
+        cakeDesign = { ...design.design };
+        
+        // Update UI to reflect loaded design
+        updateUIFromDesign();
+        drawCake();
+        updateCakePrice();
+        
+        closeSavedDesigns();
+        showNotification('Design loaded successfully!', 'success');
+        
+        trackEvent('saved_design_loaded', { designId });
+    }
+}
+
+function deleteSavedDesign(designId, event) {
+    event.stopPropagation();
+    
+    savedDesigns = savedDesigns.filter(d => d.id !== designId);
+    localStorage.setItem('naijabites_saved_designs', JSON.stringify(savedDesigns));
+    
+    showSavedDesigns(); // Refresh the display
+    showNotification('Design deleted', 'info');
+    
+    trackEvent('saved_design_deleted', { designId });
+}
+
+function updateUIFromDesign() {
+    // Update size selection
+    if (cakeDesign.size) {
+        document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+        document.querySelector(`[data-size="${cakeDesign.size}"]`)?.classList.add('selected');
+    }
+    
+    // Update flavor selection
+    if (cakeDesign.flavor) {
+        document.querySelectorAll('.flavor-option').forEach(el => el.classList.remove('selected'));
+        document.querySelector(`[data-flavor="${cakeDesign.flavor}"]`)?.classList.add('selected');
+    }
+    
+    // Update shape selection
+    document.querySelectorAll('.shape-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-shape="${cakeDesign.shape}"]`)?.classList.add('selected');
+    
+    // Update color selection
+    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-color="${cakeDesign.frostingColor}"]`)?.classList.add('selected');
+    
+    // Update decorations
+    document.querySelectorAll('.decoration-item').forEach(el => el.classList.remove('selected'));
+    cakeDesign.decorations.forEach(decoration => {
+        document.querySelector(`[data-decoration="${decoration}"]`)?.classList.add('selected');
+    });
+    
+    // Update text
+    document.getElementById('cakeMessageInput').value = cakeDesign.text.message;
+    document.getElementById('textFont').value = cakeDesign.text.font;
+    
+    // Update text color
+    document.querySelectorAll('.text-color').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-color="${cakeDesign.text.color}"]`)?.classList.add('selected');
+    
+    // Update text position
+    document.querySelectorAll('.position-btn').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-position="${cakeDesign.text.position}"]`)?.classList.add('active');
+    
+    // Update extras checkboxes
+    document.querySelectorAll('.extra-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+    cakeDesign.extras.forEach(extra => {
+        const checkbox = document.querySelector(`[data-extra="${extra.id}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+}
+
+// =============================================================================
+// ADD TO CART FUNCTION
+// =============================================================================
+
+function addCakeToCart() {
+    if (!cakeDesign.size) {
+        showNotification('Please select a cake size', 'error');
+        return;
+    }
+    
+    if (!selectedLocation) {
+        showNotification('Please select a location first', 'error');
+        return;
+    }
+    
+    const totalPrice = calculateCakePrice();
+    
+    // Create custom cake item
+    const cakeItem = {
+        id: generateCartItemId(),
+        productId: 2, // Assuming cake product ID is 2
+        name: `Custom ${cakeDesign.size.charAt(0).toUpperCase() + cakeDesign.size.slice(1)} Cake`,
+        basePrice: cakeSizes[cakeDesign.size].basePrice,
+        price: totalPrice,
+        unit: 'cake',
+        quantity: 1,
+        location: selectedLocation,
+        category: 'cakes',
+        isDeal: false,
+        isCustomized: true,
+        isCakeBuilder: true,
+        cakeDesign: { ...cakeDesign },
+        customText: cakeDesign.text.message,
+        specialInstructions: `Custom cake design - ${cakeDesign.shape} shape, ${cakeDesign.flavor || 'vanilla'} flavor, ${cakeDesign.frostingColor} frosting`
+    };
+    
+    // Add to cart
+    cart.push(cakeItem);
+    
+    updateCartDisplay();
+    updateQuickCartCount();
+    saveCartToStorage();
+    closeCakeBuilder();
+    
+    showNotification('Custom cake added to your order!', 'success');
+    
+    trackEvent('custom_cake_added_to_cart', {
+        design: cakeDesign,
+        price: totalPrice,
+        location: selectedLocation,
+        timestamp: new Date().toISOString()
+    });
+}
+
+function calculateCakePrice() {
+    let totalPrice = 0;
+    
+    if (cakeDesign.size) {
+        totalPrice += cakeSizes[cakeDesign.size].basePrice;
+    }
+    
+    if (cakeDesign.flavor) {
+        totalPrice += flavorPrices[cakeDesign.flavor];
+    }
+    
+    totalPrice += shapePrices[cakeDesign.shape];
+    
+    cakeDesign.decorations.forEach(decoration => {
+        totalPrice += decorationPrices[decoration];
+    });
+    
+    cakeDesign.extras.forEach(extra => {
+        totalPrice += extra.price;
+    });
+    
+    return totalPrice;
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+function generateDesignId() {
+    return 'design_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// =============================================================================
+// ENHANCED INITIALIZATION
+// =============================================================================
+
+// Update the main initialization function
+const originalInitializeApp = initializeApp;
+async function initializeApp() {
+    await originalInitializeApp();
+    
+    // Initialize cake builder after main app
+    setTimeout(() => {
+        initializeCakeBuilder();
+    }, 100);
+}
+
+// Update product card creation to use cake builder for customizable cakes
+const originalCreateProductCard = createProductCard;
+function createProductCard(product, index) {
+    if (product.isCustomizable && product.category === 'cakes') {
+        // Replace the customize button for cakes
+        const cardHTML = originalCreateProductCard(product, index);
+        return cardHTML.replace(
+            'onclick="openProductCustomization(',
+            'onclick="openCakeBuilder('
+        ).replace(
+            'Customize & Order',
+            '<i class="fas fa-magic"></i> Design Your Cake'
+        );
+    }
+    
+    return originalCreateProductCard(product, index);
+}
+
+// =============================================================================
+// GLOBAL EXPORTS (Batch 2)
+// =============================================================================
+
+// Export cake builder functions
+window.openCakeBuilder = openCakeBuilder;
+window.closeCakeBuilder = closeCakeBuilder;
+window.selectCakeSize = selectCakeSize;
+window.selectCakeFlavor = selectCakeFlavor;
+window.selectCakeShape = selectCakeShape;
+window.selectFrostingColor = selectFrostingColor;
+window.toggleDecoration = toggleDecoration;
+window.updateCakeText = updateCakeText;
+window.updateTextStyle = updateTextStyle;
+window.selectTextColor = selectTextColor;
+window.setTextPosition = setTextPosition;
+window.toggleExtra = toggleExtra;
+window.switchDesignTab = switchDesignTab;
+window.rotateCake = rotateCake;
+window.resetCakeView = resetCakeView;
+window.saveCakeDesign = saveCakeDesign;
+window.showSavedDesigns = showSavedDesigns;
+window.closeSavedDesigns = closeSavedDesigns;
+window.loadSavedDesign = loadSavedDesign;
+window.deleteSavedDesign = deleteSavedDesign;
+window.addCakeToCart = addCakeToCart;
+
+console.log('🎂 Naija Bites Batch 2: Interactive Cake Builder Loaded Successfully!');
